@@ -36,7 +36,7 @@ namespace AutoConnectNet
             while (true)
             {
                 Thread.Sleep(500);
-                if(!DLLWrapper.InternetGetConnectedState(out n, 0))
+                if(!DLLWrapper.InternetGetConnectedState(out n, 0) /*|| n != 81*/)//81貌似是连接的宽带
                 {
                     if (failedToConnectTimes <= MaxConnectTimes)
                         ConnectNet(filepath);
@@ -54,8 +54,7 @@ namespace AutoConnectNet
         /// <param name="filepath"></param>
         static void ConnectNet(string filepath)
         {
-            Process proc = null;
-            try
+            using (Process proc = new Process())
             {
                 proc = new Process();
                 proc.StartInfo.FileName = filepath;
@@ -63,7 +62,7 @@ namespace AutoConnectNet
                 proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 proc.Start();
                 bool result = proc.WaitForExit(10000);//等待10s
-                if(!result || !DLLWrapper.InternetGetConnectedState(out n, 0))
+                if (!result || !DLLWrapper.InternetGetConnectedState(out n, 0))
                 {
                     if (!result)
                     {
@@ -72,9 +71,9 @@ namespace AutoConnectNet
                     failedToConnectTimes++;
                 }
             }
-            catch (Exception e)
+            if (failedToConnectTimes % 5 == 0)
             {
-                //Console.WriteLine(e);
+                GC.Collect();
             }
         }
 
